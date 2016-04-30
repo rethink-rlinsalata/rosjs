@@ -27,7 +27,7 @@ let log = require('./logger.js').createLogger();
 // chaining works by continuing this path prepending.
 let cmakePath = process.env.CMAKE_PREFIX_PATH;
 let cmakePaths = cmakePath.split(':');
-let jsMsgPath = path.join('share', 'node_js', 'ros');
+let jsMsgPath = path.join('share', 'gennodejs', 'ros');
 
 let messagePackageMap = {};
 let messagePackagePathMap = {};
@@ -71,6 +71,11 @@ function copyFile(from, to, replaceCallback) {
       fileData += data;
     });
 
+    readStream.on('error', (err) => {
+      console.warn('Error while trying to copy file %s', from);
+      reject();
+    });
+
     readStream.on('end', () => {
       if (typeof replaceCallback === 'function') {
         fileData = replaceCallback(fileData);
@@ -109,7 +114,7 @@ let MessageUtils = {
   },
 
   flatten(outputDir) {
-    const finderDeclRegex = /^let _finder = require\('\.\.\/\.\.\/\.\.\/find\.js'\);/m;
+    const finderDeclRegex = /^let _finder = require\('\.\.\/find\.js'\);/m;
     const finderCallRegex = /^let (\w+) = _finder\(\'\1\'\);/gm;
 
     const flatten_local = (packageName, startPath, localPath, outputDir) => {
@@ -153,30 +158,17 @@ let MessageUtils = {
     const messageDirectory = path.join(outputDir, 'ros');
     createDirectory(messageDirectory);
 
-    // find relevant genjs base files and copy to output directory
-    const filesToCopy = ['base_deserialize.js', 'base_serialize.js'];
-    cmakePaths.some((cmakePath) => {
-      const checkPath = path.join(cmakePath, 'share', 'node_js');
-      let files = fs.readdirSync(checkPath);
-      if (!files) {
-        return false;
-      }
-      files.forEach((fileName) => {
-        if (filesToCopy.indexOf(fileName) !== -1) {
-          copyFile(path.join(checkPath, fileName), path.join(outputDir, fileName));
-        }
-      });
-      return true;
-    });
-
     Object.keys(messagePackagePathMap).forEach((packageName) => {
       const messagePackagePath = messagePackagePathMap[packageName];
-      const dir = path.dirname(messagePackagePath)
+      const dir = path.dirname(messagePackagePath);
 
       flatten_local(packageName, dir, 'msg', messageDirectory);
       flatten_local(packageName, dir, 'srv', messageDirectory);
-      // copy the index
+
+      // copy the index and base serialization files
       copyFile(messagePackagePath, path.join(messageDirectory, packageName, '_index.js'));
+      copyFile(path.join(dir, 'base_serialize.js'), path.join(messageDirectory, packageName, 'base_serialize.js'));
+      copyFile(path.join(dir, 'base_deserialize.js'), path.join(messageDirectory, packageName, 'base_deserialize.js'));
     });
   },
 
