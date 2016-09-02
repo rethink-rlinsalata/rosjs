@@ -70,7 +70,7 @@ function writeRequires(w, spec, isSrv, previousPackages=null, previousDeps=null)
       if (fieldPack === packageName) {
         const fieldMsgType = field.getMessage();
         // don't require this type again
-        if (!previousDeps.has(fieldMsgType)) {
+        if (!previousDeps.has(fieldMsgType) && !localDeps.has(fieldMsgType)) {
           localDeps.add(fieldMsgType);
           if (isSrv) {
             w.write('const %s = require(\'../msg/%s.js\');', fieldMsgType, fieldMsgType);
@@ -81,7 +81,7 @@ function writeRequires(w, spec, isSrv, previousPackages=null, previousDeps=null)
       }
       else {
         // don't find this package again
-        if (!previousPackages.has(fieldPack)) {
+        if (!previousPackages.has(fieldPack) && !foundPackages.has(fieldPack)) {
           foundPackages.add(fieldPack);
           w.write('const %s = _finder(\'%s\');', fieldPack, fieldPack);
         }
@@ -264,7 +264,7 @@ function writeDeserializeMessageField(w, field, thisPackage) {
     else {
       w.write(`data.${field.name}[i] = ${fieldPackage}.msg.${msgName}.deserialize(buffer, bufferOffset);`);
     }
-    w.write('}');
+    w.dedent('}');
   }
   else {
     if (samePackage) {
@@ -295,7 +295,7 @@ function writeDeserializeBuiltinField(w, field) {
     }
   }
   else {
-    w.write(`data.${field.name} = _deserializer.${field.baseType}(bufferInfo, bufferOffset);`);
+    w.write(`data.${field.name} = _deserializer.${field.baseType}(buffer, bufferOffset);`);
   }
 }
 
@@ -319,9 +319,10 @@ function writeDeserializeField(w, field, packageName) {
 }
 
 function writeDeserialize(w, spec) {
-  w.write('static deserialize(buffer, bufferOffset) {')
+  w.write('static deserialize(buffer, bufferOffset=[0]) {')
     .indent('// Deserializes a message object of type %s', spec.messageName)
-    .write('let data = new %s();', spec.messageName);
+    .write('let data = new %s();', spec.messageName)
+    .write('let len;');
   spec.fields.forEach((field) => {
     writeDeserializeField(w, field, spec.packageName);
   });

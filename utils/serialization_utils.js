@@ -126,7 +126,7 @@ DeserializeStream.prototype = {
     done();
   },
 
-  emitMessage(buffer) {  
+  emitMessage(buffer) {
     if (this._deserializeServiceResp) {
       this.emit('message', buffer, this._serviceRespSuccess);
       this._serviceRespSuccess = null;
@@ -163,7 +163,7 @@ let SerializationUtils = {
   },
 
   Deserialize(buffer) {
-    let len = buffer.readUInt32LE(0, true)
+    let len = buffer.readUInt32LE(0, true);
     buffer = buffer.slice(4);
     return len;
   }

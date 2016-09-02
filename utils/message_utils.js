@@ -207,24 +207,27 @@ let MessageUtils = {
     return messagePackageMap[msgPackage];
   },
 
-  getHandlerForMsgType(rosDataType) {
+  getHandlerForMsgType(rosDataType, loadIfMissing=false) {
     let type = messages.getFromRegistry(rosDataType, ["msg"]);
     if (type) {
       return new type();
     } else {
-      let parts = rosDataType.split('/');
-      let msgPackage = parts[0];
+      const [msgPackage, type] = rosDataType.split('/');
       let messagePackage = this.getPackage(msgPackage);
-      if (messagePackage) {
-        let type = parts[1];
-        return messagePackage.msg[type];
-      } else {
+      if (!messagePackage && loadIfMissing) {
+        this.loadMessagePackage(msgPackage);
+        messagePackage = this.getPackage(msgPackage);
+      }
+
+      if (!messagePackage) {
         throw new Error('Unable to find message package ' + msgPackage);
       }
+      // else
+      return messagePackage.msg[type];
     }
   },
 
-  getHandlerForSrvType(rosDataType) {
+  getHandlerForSrvType(rosDataType, loadIfMissing=false) {
     let request =
       messages.getFromRegistry(rosDataType, ["srv", "Request"]);
     let response =
@@ -235,16 +238,20 @@ let MessageUtils = {
         Response: response
       };
     } else {
-      let parts = rosDataType.split('/');
-      let msgPackage = parts[0];
+      const [msgPackage, type] = rosDataType.split('/');
       let messagePackage = this.getPackage(msgPackage);
-      if (messagePackage) {
-        let type = parts[1];
-        return messagePackage.srv[type];
-      } else {
-        throw new Error('Unable to find service package ' + msgPackage 
+
+      if (!messagePackage && loadIfMissing) {
+        this.loadMessagePackage(msgPackage);
+        messagePackage = this.getPackage(msgPackage);
+      }
+
+      if (!messagePackage) {
+        throw new Error('Unable to find service package ' + msgPackage
                         + '. Request: ' + !!request + ', Response: ' + !!response);
       }
+      // else
+      return messagePackage.srv[type];
     }
   }
 };

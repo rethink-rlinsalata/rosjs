@@ -20,70 +20,10 @@ var packages   = require('./packages')
 const Field = fieldsUtil.Field;
 
 var messages = exports;
-packages.findMessagePackages();
-console.log('done finding messages');
-var packageCache = packages.getPackageCache();
 
 function getFullMessageName(packageName, messageName) {
   return packageName + '/' + messageName;
 }
-
-function getDependencies(msgSpec, deps) {
-  const {packageName} = msgSpec;
-  msgSpec.fields.forEach((field) => {
-    if (!field.isBuiltin && !field.baseType.startsWith(packageName)) {
-      if (field.isHeader) {
-        deps.add('std_msgs');
-      }
-      else {
-        const pkg = getPackageNameFromMessageType(field.baseType);
-        if (!pkg) {
-          const x = 1;
-        }
-        deps.add(pkg);
-      }
-    }
-  });
-}
-
-Object.keys(packageCache).forEach((packageName) => {
-
-  const packageInfo = packageCache[packageName];
-  const packageDeps = new Set();
-  // console.log('package %s: %j', packageName, packageInfo);
-
-  packageInfo.forEach = (item, func) => {
-    let itemInfo = packageInfo[item];
-    Object.keys(itemInfo).forEach((item) => {
-      const ret = func(item, itemInfo[item]);
-      if (ret) {
-        itemInfo[item][ret.key] = ret.val;
-      }
-    });
-  };
-
-  packageInfo.forEach('messages', (message, {file}) => {
-    console.log('loading message %s from %s', message, file);
-    const msgSpec = buildMessageSpec(packageName, message, file, ['msg']);
-
-    getDependencies(msgSpec, packageDeps);
-
-    return {
-      key: 'msgSpec',
-      val: msgSpec
-    };
-  });
-  packageInfo.forEach('services', (message, file) => {
-    console.log('loading service %s from %s', message, file);
-    // getMessageFromFile(fullName(message), file, ['srv', 'Request']);
-    // getMessageFromFile(fullName(message), file, ['srv', 'Response']);
-  });
-  packageInfo.forEach('actions', (message, file) => {
-    console.log('skipping action %s from %s', message, file);
-  });
-
-  packageInfo.dependencies = Array.from(packageDeps);
-});
 
 // ---------------------------------------------------------
 // exported functions
@@ -91,11 +31,11 @@ Object.keys(packageCache).forEach((packageName) => {
 /** get message handler class from registry */
 messages.getFromRegistry = function(messageType, type) {
   return getMessageFromRegistry(messageType, type);
-}
+};
 
 messages.getPackageFromRegistry = function(packagename) {
   return registry[packagename];
-}
+};
 
 /** ensure the handler for this message type is in the registry,
  * create it if it doesn't exist */
@@ -713,14 +653,12 @@ function buildMessageClass(details) {
   Message.Constants = Message.constants
     = Message.prototype.constants   = details.constants;
   Message.fields      = Message.prototype.fields      = details.fields;
-  Message.serialize   = Message.prototype.serialize   =
-    function(obj, bufferInfo) {
-      return serializeMessage(obj, bufferInfo);
-    }
-  Message.deserialize = Message.prototype.deserialize = function(buffer) {
-    var obj = deserializeMessage(buffer, Message);
-    return obj;
-  }
+  Message.serialize   = Message.prototype.serialize   = function(obj, buffer) {
+      return serializeInnerMessage(obj, buffer, 0);
+    };
+  Message.deserialize = Message.prototype.deserialize = function(buffer, bufferOffset) {
+    return deserializeInnerMessage(new Message(), buffer, bufferOffset);
+  };
 
   return Message;
 }
@@ -756,18 +694,6 @@ function getMessageNameFromMessageType(messageType) {
 
 // ---------------------------------------------------------
 // Serialize
-
-function serializeMessage(message, bufferInfo) {
-  var bufferSize   = fieldsUtil.getMessageSize(message);
-  var buffer       = new Buffer(bufferSize);
-
-  serializeInnerMessage(message, buffer, 0);
-
-  bufferInfo.buffer = [buffer];
-  bufferInfo.length = bufferSize;
-
-  return bufferInfo;
-}
 
 function serializeInnerMessage(message, buffer, bufferOffset) {
   message.fields.forEach(function(field) {
@@ -805,16 +731,6 @@ function serializeInnerMessage(message, buffer, bufferOffset) {
 // ---------------------------------------------------------
 // Deserialize
 
-function deserializeMessage(buffer, messageType) {
-  var message            = new messageType();
-
-  message = deserializeInnerMessage(message, buffer, 0);
-
-  return {
-    data: message,
-    buffer: buffer
-  };
-}
 
 function deserializeInnerMessage(message, buffer, bufferOffset) {
   message.fields.forEach(function(field) {

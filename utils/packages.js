@@ -172,12 +172,10 @@ function findPackageInDirectoryChain(directories, packageName, callback) {
 }
 
 function findPackagesInDirectoryChain(directories) {
-  const promises = [];
-  directories.forEach((directory) => {
-    //console.log('look for packages in %s', directory);
-    promises.push(findPackagesInDirectory(directory));
-  });
-  return Promise.all(promises);
+  const funcs = directories.map((directory) => { return findPackagesInDirectory.bind(null, directory); });
+  return funcs.reduce((prev, cur) => {
+    return prev.then(cur);
+  }, Promise.resolve());
 }
 
 // ---------------------------------------------------------
@@ -194,11 +192,9 @@ exports.findPackage = function(packageName, callback) {
 };
 
 exports.findMessagePackages = function() {
-  var rosRoot = process.env.ROS_ROOT;
   var packagePath = process.env.ROS_PACKAGE_PATH;
   var rosPackagePaths = packagePath.split(':');
-  var directories = [rosRoot].concat(rosPackagePaths);
-  return findPackagesInDirectoryChain(directories);
+  return findPackagesInDirectoryChain(rosPackagePaths);
 };
 
 exports.getPackageCache = function() {

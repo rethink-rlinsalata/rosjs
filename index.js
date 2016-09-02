@@ -142,7 +142,7 @@ let Rosnodejs = {
 
     return this.use(options.messages, options.services)
       .then(_checkMasterHelper)
-      .then(Logging.initializeOptions.bind(null, this, options.logging))
+      .then(Logging.initializeOptions.bind(Logging, this, options.logging))
       .then(() => { return this.getNodeHandle(); })
       .catch((err) => {
         log.error('Error: ' + err);
@@ -179,9 +179,6 @@ let Rosnodejs = {
         return msgUtils.getPackage(msgPackage);
       }
       catch(err) {
-        // couldn't load message package from pre-built. Try to do it on the fly
-        // TODO: only do this when a flag is present saying to
-        console.error(err);
       }
     }
     // else
