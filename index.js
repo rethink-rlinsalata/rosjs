@@ -29,6 +29,7 @@ const LogFormatter = require('./utils/log/LogFormatter.js');
 const RosNode = require('./lib/RosNode.js');
 const NodeHandle = require('./lib/NodeHandle.js');
 const Logging = require('./lib/Logging.js');
+const MsgLoader = require('./utils/MessageLoader.js');
 
 msgUtils.findMessageFiles();
 
@@ -44,27 +45,35 @@ let firstCheck = true;
 
 //------------------------------------------------------------------
 
-function _checkMasterHelper(callback, timeout) {
-  setTimeout(() => {
-    // also check that the slave api server is set up
-    if (!rosNode.slaveApiSetupComplete()) {
-      _checkMasterHelper(callback, 500);
-      return;
-    }
-    // else
-    rosNode.getMasterUri()
-    .then((resp) => {
-      log.infoOnce('Connected to master!');
-      callback();
-    })
-    .catch((err, resp) => {
-      if (firstCheck) {
-        log.warnOnce('Unable to connect to master. ' + err);
-        firstCheck = false;
+function _checkMasterHelper(timeout) {
+
+  const localHelper = (resolve) => {
+    setTimeout(() => {
+      // also check that the slave api server is set up
+      if (!rosNode.slaveApiSetupComplete()) {
+        localHelper(resolve);
+        return;
       }
-      _checkMasterHelper(callback, 500);
-    })
-  }, timeout);
+      // else
+      rosNode.getMasterUri()
+      .then((resp) => {
+        log.infoOnce('Connected to master!');
+        resolve();
+      })
+      .catch((err, resp) => {
+        if (firstCheck) {
+          log.warnOnce('Unable to connect to master. ' + err);
+          firstCheck = false;
+        }
+        console.log('check master: ' + err);
+        localHelper(resolve);
+      })
+    }, timeout);
+  };
+
+  return new Promise((resolve, reject) => {
+    localHelper(resolve);
+  });
 }
 
 /**
@@ -129,23 +138,29 @@ let Rosnodejs = {
 
     // create the ros node. Return a promise that will
     // resolve when connection to master is established
-    let checkMasterTimeout =  0;
     rosNode = new RosNode(nodeName, rosMasterUri);
 
-    return new Promise((resolve, reject) => {
-      this.use(options.messages, options.services).then(() => {
-
-        const connectedToMasterCallback = () => {
-          Logging.initializeOptions(this, options.logging);
-          resolve(this.getNodeHandle());
-        };
-
-        _checkMasterHelper(connectedToMasterCallback, 0);
+    return this.use(options.messages, options.services)
+      .then(_checkMasterHelper)
+      .then(Logging.initializeOptions.bind(null, this, options.logging))
+      .then(() => { return this.getNodeHandle(); })
+      .catch((err) => {
+        log.error('Error: ' + err);
       });
-    })
-    .catch((err) => {
-      log.error('Error: ' + err);
-    });
+  },
+
+  loadAllPackages(outputDir) {
+    const msgLoader = new MsgLoader();
+    if (!outputDir) {
+      outputDir = msgUtils.getTopLevelMessageDirectory();
+    }
+    return msgLoader.buildPackageTree(outputDir)
+      .then(() => {
+        console.log('Finished building messages!');
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   },
 
   require(msgPackage) {
@@ -159,8 +174,15 @@ let Rosnodejs = {
     // pre-compiled versions
     let pack = msgUtils.getPackage(msgPackage);
     if (!pack) {
-      msgUtils.loadMessagePackage(msgPackage);
-      return msgUtils.getPackage(msgPackage);
+      try {
+        msgUtils.loadMessagePackage(msgPackage);
+        return msgUtils.getPackage(msgPackage);
+      }
+      catch(err) {
+        // couldn't load message package from pre-built. Try to do it on the fly
+        // TODO: only do this when a flag is present saying to
+        console.error(err);
+      }
     }
     // else
     return pack;
@@ -192,15 +214,14 @@ let Rosnodejs = {
    * types before calling callback */
   use(messages, services) {
     const self = this;
-    return new Promise((resolve, reject) => {
-      self._useMessages(messages)
-        .then(() => { return self._useServices(services); })
-        .then(() => { resolve(); });
-    });
+    // FIXME: make old on the fly work again
+    return Promise.resolve();
+    // return self._useMessages(messages)
+    //     .then(() => { return self._useServices(services); });
   },
 
   /** create message classes for all the given types */
-  _useMessages(types) {
+  _useMessages(types=[]) {
     const self = this;
 
     // make sure required types are available
@@ -234,7 +255,7 @@ let Rosnodejs = {
   },
 
   /** create service classes for all the given types */
-  _useServices(types) {
+  _useServices(types=[]) {
     if (!types || types.length == 0) {
       return Promise.resolve();
     }
@@ -275,6 +296,6 @@ let Rosnodejs = {
       ros:     RosLogStream
     }
   }
-}
+};
 
 module.exports = Rosnodejs;

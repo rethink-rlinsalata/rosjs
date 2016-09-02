@@ -28,6 +28,7 @@
     "walker"        : "1.0.7",
     "md5"           : "2.1.0",
     "async"         : "0.1.22",
-    "bunyan": "1.8.1"
+    "bunyan"        : "1.8.1",
+    "ros_msg_utils" : "RethinkRobotics-opensource/ros_msg_utils"
   }
 }

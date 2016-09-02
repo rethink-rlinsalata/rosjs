@@ -91,6 +91,10 @@ function copyFile(from, to, replaceCallback) {
 }
 
 let MessageUtils = {
+  getTopLevelMessageDirectory() {
+    return path.join(cmakePaths[0], jsMsgPath);
+  },
+
   findMessageFiles() {
     if (Object.keys(messagePackagePathMap).length > 0) {
       return;
@@ -176,7 +180,7 @@ let MessageUtils = {
 
     Object.keys(messagePackagePathMap).forEach((packageName) => {
       const messagePackagePath = messagePackagePathMap[packageName];
-      const dir = path.dirname(messagePackagePath)
+      const dir = path.dirname(messagePackagePath);
 
       flatten_local(packageName, dir, 'msg', messageDirectory);
       flatten_local(packageName, dir, 'srv', messageDirectory);
