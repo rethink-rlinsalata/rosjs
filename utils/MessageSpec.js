@@ -51,13 +51,13 @@ function parseType(msgType) {
   const field = {};
   if (isArray(msgType)) {
     field.isArray = true;
-    var constantLength = msgType.endsWith('[]');
-    var splits = msgType.split('[');
+    const variableLength = msgType.endsWith('[]');
+    const splits = msgType.split('[');
     if (splits.length > 2) {
       throw new Error(`Only support 1-dimensional array types: ${msgType}`);
     }
     field.baseType = splits[0];
-    if (constantLength) {
+    if (!variableLength) {
       field.arrayLen = getLengthOfArray(msgType);
     }
     else {

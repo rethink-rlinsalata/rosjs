@@ -121,7 +121,7 @@ function getDefaultValue(field, packageName) {
     return '0';
   }
   // else
-  let fieldInfo = field.type.split('/');
+  let fieldInfo = field.baseType.split('/');
   if (fieldInfo[0] === packageName) {
     return util.format('new %s()', fieldInfo[1]);
   }

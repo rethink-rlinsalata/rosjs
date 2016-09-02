@@ -127,6 +127,7 @@ class MessageManager {
   initTree() {
     let p;
     if (packageCache === null) {
+      this.log('Traversing ROS_PACKAGE_PATH...');
       p = packages.findMessagePackages();
     }
     else {
@@ -302,6 +303,7 @@ class MessageManager {
   }
 
   _loadMessagesInCache() {
+    this.log('Loading messages...');
     Object.keys(packageCache).forEach((packageName) => {
 
       const packageInfo = packageCache[packageName];
