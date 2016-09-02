@@ -166,17 +166,7 @@ function writeSerializeLengthCheck(w, field) {
 
 function writeSerializeBuiltinField(w, f) {
   if (f.isArray) {
-    if (f.baseType === 'uint8') {
-      w.write(`buffer.write(obj.${f.name});`);
-      w.write(`bufferOffset += obj.${f.name}.length;`);
-    }
-    else {
-      w.write(`obj.${f.name}.forEach((val) => {`)
-        .indent()
-        .write(`bufferOffset = _serializer.${f.baseType}(val, buffer, bufferOffset);`)
-        .dedent()
-        .write('});');
-    }
+    w.write(`bufferOffset = _serializer.${f.baseType}(obj.${f.name}, buffer, bufferOffset, true);`);
   }
   else {
     w.write(`bufferOffset = _serializer.${f.baseType}(obj.${f.name}, buffer, bufferOffset);`);
@@ -278,21 +268,10 @@ function writeDeserializeMessageField(w, field, thisPackage) {
 
 function writeDeserializeBuiltinField(w, field) {
   if (field.isArray) {
-    if (field.baseType === 'uint8') {
-      w.write(`data.${field.name} = buffer.slice(0, len);`);
-      w.write('bufferOffset[0] += len;');
+    if (!field.arrayLen) {
+      w.write(`data.${field.name} = new Array(len);`);
     }
-    else {
-      // only create a new array if it has a non-constant length
-      if (!field.arrayLen) {
-        w.write(`data.${field.name} = new Array(len);`);
-      }
-      w.write('for (let i = 0; i < len; ++i) {')
-        .indent()
-        .write(`data.${field.name}[i] = _deserializer.${field.baseType}(buffer, bufferOffset);`)
-        .dedent()
-        .write('}');
-    }
+    w.write(`_deserializer.${field.baseType}(buffer, bufferOffset, data.${field.name});`);
   }
   else {
     w.write(`data.${field.name} = _deserializer.${field.baseType}(buffer, bufferOffset);`);

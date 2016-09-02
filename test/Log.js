@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const chai = require('chai');
 const expect = chai.expect;
@@ -23,7 +23,7 @@ class OutputCapture {
   get() {
     return this.lastMsg;
   }
-};
+}
 
 describe('Logging', () => {
   const outputCapture = new OutputCapture();
@@ -32,7 +32,7 @@ describe('Logging', () => {
     outputCapture.flush();
     expect(outputCapture.get()).to.equal(null);
 
-    rosnodejs.log.rootLogger._throttledLogs = new Set();
+    rosnodejs.log.rootLogger._throttledLogs = new Map();
     rosnodejs.log.rootLogger._onceLogs = new Set();
   };
 
@@ -175,6 +175,18 @@ describe('Logging', () => {
     reset();
   });
 
+  it('Throttling', () => {
+    const message = 'This is my message';
+    reset();
+    rosnodejs.log.infoThrottle(1000, message);
+    expect(outputCapture.get().msg).to.have.string(message);
+    expect(outputCapture.get().level).to.equal(bunyan.INFO);
+
+    outputCapture.flush();
+    rosnodejs.log.infoThrottle(1000, message);
+    expect(outputCapture.get()).to.be.null;
+  });
+
   it('Bound Log Methods', () => {
     const message = 'This is my message';
 
@@ -281,7 +293,7 @@ describe('Logging', () => {
       let subInfo = null;
 
       masterStub.on('getUri', (err, params, callback) => {
-        const resp = [ 1, '', 'localhost:11311/' ]
+        const resp = [ 1, '', 'localhost:11311/' ];
         callback(null, resp);
       });
 
