@@ -217,6 +217,10 @@ let Rosnodejs = {
     //     .then(() => { return self._useServices(services); });
   },
 
+  shutdown() {
+    return rosNode.shutdown();
+  },
+
   /** create message classes for all the given types */
   _useMessages(types=[]) {
     const self = this;
