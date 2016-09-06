@@ -11,7 +11,7 @@ env:
     - ROS_PARALLEL_JOBS="-j8 -l6"
   matrix:
     - ROS_DISTRO=kinetic
-    - ROSINSTALL_FILE=~/$ROS_DISTRO-ros_comm-wet.rosinstall
+    - ROSINSTALL_FILE=~/kinetic-ros_comm-wet.rosinstall
 
 # Install system dependencies, namely ROS.
 before_install:
