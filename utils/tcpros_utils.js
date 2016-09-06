@@ -47,6 +47,17 @@ function serializeStringFields(fields) {
   return buffer;
 }
 
+function deserializeStringFields(buffer) {
+  const fields = [];
+  const offset = [0];
+  while (offset[0] < buffer.length) {
+    const str = base_deserializers.string(buffer, offset);
+    fields.push(str);
+  }
+
+  return fields;
+}
+
 let TcprosUtils = {
 
   createSubHeader(callerId, md5sum, topic, type) {
@@ -93,11 +104,11 @@ let TcprosUtils = {
 
   parseTcpRosHeader(header) {
     let info = {};
-    while (header.length !== 0) {
-      const {string, buffer} = this.deserializeString(header, true);
-      header = buffer;
 
-      let matchResult = string.match(/^(\w+)=(.+)/m);
+    const fields = deserializeStringFields(header);
+    fields.forEach((field) => {
+      let matchResult = field.match(/^(\w+)=(.+)/m);
+
       // invalid connection header
       if (!matchResult) {
         console.error('Invalid connection header while parsing field %s', field);
@@ -105,16 +116,15 @@ let TcprosUtils = {
       }
       // else
       info[matchResult[1]] = matchResult[2];
-    }
+    });
+
     return info;
   },
 
   parseSubHeader(header) {
-    let i = 0;
     let info = {};
-    while ( header.length !== 0 ) {
-      const {string: field, buffer} = this.deserializeString(header, true);
-      header = buffer;
+    const fields = deserializeStringFields(header);
+    fields.forEach((field) => {
       
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
@@ -128,17 +138,14 @@ let TcprosUtils = {
       else if (field.startsWith(typePrefix)) {
         info.type = field.substr(typePrefix.length);
       }
-      ++i;
-    }
+    });
     return info;
   },
 
   parsePubHeader(header) {
-    let i = 0;
     let info = {};
-    while ( header.length !== 0 ) {
-      const {string: field, buffer} = this.deserializeString(header, true);
-      header = buffer;
+    const fields = deserializeStringFields(header);
+    fields.forEach((field) => {
       
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
@@ -152,17 +159,14 @@ let TcprosUtils = {
       else if (field.startsWith(typePrefix)) {
         info.type = field.substr(typePrefix.length);
       }
-      ++i;
-    }
+    });
     return info;
   },
 
   parseServiceClientHeader(header) {
-    let i = 0;
     let info = {};
-    while ( header.length !== 0 ) {
-      const {string: field, buffer} = this.deserializeString(header, true);
-      header = buffer;
+    const fields = deserializeStringFields(header);
+    fields.forEach((field) => {
 
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
@@ -176,17 +180,14 @@ let TcprosUtils = {
       else if (field.startsWith(typePrefix)) {
         info.type = field.substr(typePrefix.length);
       }
-      ++i;
-    }
+    });
     return info;
   },
 
   parseServiceServerHeader(header) {
-    let i = 0;
     let info = {};
-    while ( header.length !== 0 ) {
-      const {string: field, buffer} = this.deserializeString(header, true);
-      header = buffer;
+    const fields = deserializeStringFields(header);
+    fields.forEach((field) => {
       
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
@@ -197,8 +198,7 @@ let TcprosUtils = {
       else if (field.startsWith(typePrefix)) {
         info.type = field.substr(typePrefix.length);
       }
-      ++i;
-    }
+    });
     return info;
   },
 
@@ -281,14 +281,7 @@ let TcprosUtils = {
     return buf;
   },
 
-  deserializeString(buffer, sliceBuffer=false) {
-    if (sliceBuffer) {
-      const offset = [0];
-      const val = base_deserializers.string(buffer, offset);
-      buffer = buffer.slice(offset[0]);
-      return {string: val, buffer}
-    }
-    // else
+  deserializeString(buffer) {
     return base_deserializers.string(buffer, [0]);
   }
 };
