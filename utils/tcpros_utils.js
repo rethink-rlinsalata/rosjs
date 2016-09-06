@@ -19,11 +19,7 @@
 
 const ros_msg_utils = require('ros_msg_utils');
 const base_serializers = ros_msg_utils.Serialize;
-let SerializationUtils = require('./serialization_utils.js');
-let PrependLength = SerializationUtils.PrependLength;
-let Serialize = SerializationUtils.Serialize;
-let Deserialize = SerializationUtils.Deserialize;
-String = require('./std_msgs/String.js');
+const base_deserializers = ros_msg_utils.Deserialize;
 
 //-----------------------------------------------------------------------
 
@@ -98,10 +94,10 @@ let TcprosUtils = {
   parseTcpRosHeader(header) {
     let info = {};
     while (header.length !== 0) {
-      let item = String.deserialize(header);
-      let field = item.data;
-      header = item.buffer;
-      let matchResult = field.match(/^(\w+)=(.+)/m);
+      const {string, buffer} = this.deserializeString(header, true);
+      header = buffer;
+
+      let matchResult = string.match(/^(\w+)=(.+)/m);
       // invalid connection header
       if (!matchResult) {
         console.error('Invalid connection header while parsing field %s', field);
@@ -117,9 +113,9 @@ let TcprosUtils = {
     let i = 0;
     let info = {};
     while ( header.length !== 0 ) {
-      let item = String.deserialize(header);
-      let field = item.data;
-      header = item.buffer;
+      const {string: field, buffer} = this.deserializeString(header, true);
+      header = buffer;
+      
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
       }
@@ -141,9 +137,9 @@ let TcprosUtils = {
     let i = 0;
     let info = {};
     while ( header.length !== 0 ) {
-      let item = String.deserialize(header);
-      let field = item.data;
-      header = item.buffer;
+      const {string: field, buffer} = this.deserializeString(header, true);
+      header = buffer;
+      
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
       }
@@ -165,9 +161,9 @@ let TcprosUtils = {
     let i = 0;
     let info = {};
     while ( header.length !== 0 ) {
-      let item = String.deserialize(header);
-      let field = item.data;
-      header = item.buffer;
+      const {string: field, buffer} = this.deserializeString(header, true);
+      header = buffer;
+
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
       }
@@ -189,9 +185,9 @@ let TcprosUtils = {
     let i = 0;
     let info = {};
     while ( header.length !== 0 ) {
-      let item = String.deserialize(header);
-      let field = item.data;
-      header = item.buffer;
+      const {string: field, buffer} = this.deserializeString(header, true);
+      header = buffer;
+      
       if (field.startsWith(md5Prefix)) {
         info.md5sum = field.substr(md5Prefix.length);
       }
@@ -208,23 +204,23 @@ let TcprosUtils = {
 
   validateSubHeader(header, topic, type, md5sum) {
     if (!header.hasOwnProperty('topic')) {
-      return String('Connection header missing expected field [topic]').serialize();
+      return this.serializeString('Connection header missing expected field [topic]');
     }
     else if (!header.hasOwnProperty('type')) {
-      return String('Connection header missing expected field [type]').serialize();
+      return this.serializeString('Connection header missing expected field [type]');
     }
     else if (!header.hasOwnProperty('md5sum')) {
-      return String('Connection header missing expected field [md5sum]').serialize();
+      return this.serializeString('Connection header missing expected field [md5sum]');
     }
     else if (header.topic !== topic) {
-      return String('Got incorrect topic [' + header.topic + '] expected [' + topic + ']').serialize();
+      return this.serializeString('Got incorrect topic [' + header.topic + '] expected [' + topic + ']');
     }
     // rostopic will send '*' for some commands (hz)
     else if (header.type !== type && header.type !== '*') {
-      return String('Got incorrect message type [' + header.type + '] expected [' + type + ']').serialize();
+      return this.serializeString('Got incorrect message type [' + header.type + '] expected [' + type + ']');
     }
     else if (header.md5sum !== md5sum && header.md5sum !== '*') {
-      return String('Got incorrect md5sum [' + header.md5sum + '] expected [' + md5sum + ']').serialize();
+      return this.serializeString('Got incorrect md5sum [' + header.md5sum + '] expected [' + md5sum + ']');
     }
     // else
     return null;
@@ -277,6 +273,23 @@ let TcprosUtils = {
 
   deserializeMessage(MessageClass, messageBuffer) {
     return MessageClass.deserialize(messageBuffer, [0]);
+  },
+
+  serializeString(str) {
+    const buf = new Buffer(str.length + 4);
+    base_serializers.string(str, buf, 0);
+    return buf;
+  },
+
+  deserializeString(buffer, sliceBuffer=false) {
+    if (sliceBuffer) {
+      const offset = [0];
+      const val = base_deserializers.string(buffer, offset);
+      buffer = buffer.slice(offset[0]);
+      return {string: val, buffer}
+    }
+    // else
+    return base_deserializers.string(buffer, [0]);
   }
 };
 

@@ -5,14 +5,6 @@ var util = require('util');
 var md5 = require('md5');
 var async = require('async');
 
-// *grumble grumble* this is unfortunate
-// Our ros messages are going to be loaded from all over the place
-// They all need access to ros_msg_utils but we can't guarantee that
-// they'll be able to find ros_msg_utils without forcing people to
-// add ros_msg_utils to their node_path or installing it globally
-// or installing it separately for every message package
-global._ros_msg_utils = require('ros_msg_utils');
-
 var packages   = require('./packages')
   , fieldsUtil = require('./fields')
   , IndentedWriter = require('./IndentedWriter.js');

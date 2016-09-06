@@ -21,7 +21,7 @@
 
 const netUtils = require('./utils/network_utils.js');
 const msgUtils = require('./utils/message_utils.js');
-const messages = require('./utils/messages.js');
+const messages = require('./utils/messageGeneration/messages.js');
 const util = require('util');
 const RosLogStream = require('./utils/log/RosLogStream.js');
 const ConsoleLogStream = require('./utils/log/ConsoleLogStream.js');
@@ -29,7 +29,7 @@ const LogFormatter = require('./utils/log/LogFormatter.js');
 const RosNode = require('./lib/RosNode.js');
 const NodeHandle = require('./lib/NodeHandle.js');
 const Logging = require('./lib/Logging.js');
-const MsgLoader = require('./utils/MessageLoader.js');
+const MsgLoader = require('./utils/messageGeneration/MessageLoader.js');
 
 msgUtils.findMessageFiles();
 

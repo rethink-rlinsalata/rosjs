@@ -21,7 +21,15 @@ let fs = require('fs');
 let path = require('path');
 let utils = require('util');
 let loggingManager = require('../lib/Logging.js');
-const messages = require('./messages.js');
+const messages = require('./messageGeneration/messages.js');
+
+// *grumble grumble* this is unfortunate
+// Our ros messages are going to be loaded from all over the place
+// They all need access to ros_msg_utils but we can't guarantee that
+// they'll be able to find ros_msg_utils without forcing people to
+// add ros_msg_utils to their node_path or installing it globally
+// or installing it separately for every message package
+global._ros_msg_utils = require('ros_msg_utils');
 
 // When sourcing your workspace, CMAKE_PREFIX_PATH is AUTOMATICALLY
 // prepended with the devel directory of your workspace. Workspace
@@ -32,8 +40,6 @@ let jsMsgPath = path.join('share', 'gennodejs', 'ros');
 
 let messagePackageMap = {};
 let messagePackagePathMap = {};
-
-let logger;
 
 //-----------------------------------------------------------------------
 // Utilities for loading, finding handlers for
