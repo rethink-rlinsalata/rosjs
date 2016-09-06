@@ -38,3 +38,6 @@ install:
   - rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
   - cd ~/catkin_ws/src
   - git clone https://github.com/RethinkRobotics-opensource/test_msgs
+
+script:
+  - npm test
