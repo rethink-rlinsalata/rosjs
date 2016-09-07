@@ -149,6 +149,20 @@ let Rosnodejs = {
       });
   },
 
+  loadPackage(packageName, outputDir) {
+    const msgLoader = new MsgLoader();
+    if (!outputDir) {
+      outputDir = msgUtils.getTopLevelMessageDirectory();
+    }
+    return msgLoader.buildPackage(packageName, outputDir)
+    .then(() => {
+      console.log('Finished building messages!');
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+  },
+
   loadAllPackages(outputDir) {
     const msgLoader = new MsgLoader();
     if (!outputDir) {

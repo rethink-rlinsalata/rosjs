@@ -224,12 +224,12 @@ class RosMsgSpec {
   _parseLine(line) {
     line = line.trim();
 
-    var lineEqualIndex   = line.indexOf('=')
-      , lineCommentIndex = line.indexOf('#')
-      ;
-    if (lineEqualIndex === -1
-      || lineCommentIndex=== -1
-      || lineEqualIndex>= lineCommentIndex)
+    const lineEqualIndex   = line.indexOf('=');
+    const lineCommentIndex = line.indexOf('#');
+
+    // clear out comments if this line is not a constant
+    if ((lineEqualIndex === -1 && lineCommentIndex !== -1)
+        || lineEqualIndex > lineCommentIndex)
     {
       line = line.replace(/#.*/, '');
     }
@@ -244,13 +244,20 @@ class RosMsgSpec {
 
       if (equalIndex !== -1) {
         fieldName = field.substring(0, equalIndex).trim();
-        var constant = field.substring(equalIndex + 1, field.length).trim();
-        var parsedConstant = fieldsUtil.parsePrimitive(fieldType, constant);
+        if (fieldType !== 'string') {
+          const commentIndex = field.indexOf('#');
+          if (commentIndex !== -1) {
+            field = field.substring(0, commentIndex).trim();
+          }
+        }
+        const constant = field.substring(equalIndex + 1, field.length).trim();
+        const parsedConstant = fieldsUtil.parsePrimitive(fieldType, constant);
 
         this.constants.push({
           name        : fieldName
           , type        : fieldType
           , value       : parsedConstant
+          , stringValue : constant              // include the string value for md5 text
           , index       : this.constants.length
           , messageType : null
         });
@@ -432,7 +439,10 @@ class MsgSpec extends RosMsgSpec {
   getMd5text() {
     let text = '';
     var constants = this.constants.map(function(constant) {
-      return constant.type + ' ' + constant.name + '=' + constant.value;
+      // NOTE: use the string value of the constant from when we parsed it so that JS doesn't drop decimal precision
+      // e.g. message has constant "float32 A_CONSTANT=1.0"
+      //  here would turn into "float32 A_CONSTANT=1" if we used its parsed value
+      return constant.type + ' ' + constant.name + '=' + constant.stringValue;
     }).join('\n');
 
     var fields = this.fields.map((field) => {

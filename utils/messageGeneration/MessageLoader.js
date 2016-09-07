@@ -124,6 +124,20 @@ class MessageManager {
     });
   }
 
+  buildPackage(packageName, outputDirectory) {
+    const deps = new Set();
+    return this.initTree()
+    .then(() => {
+      this.loadPackage(packageName, outputDirectory, true, (depName) => {
+        if (!deps.has(depName)) {
+          deps.add(depName);
+          return true;
+        }
+        return false;
+      });
+    })
+  }
+
   initTree() {
     let p;
     if (packageCache === null) {

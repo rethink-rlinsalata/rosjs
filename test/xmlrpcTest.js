@@ -19,7 +19,6 @@ describe('Protocol Test', () => {
 
   after((done) => {
     masterStub.close(() => { done(); });
-    done();
   });
 
   describe('Xmlrpc', () => {
@@ -62,6 +61,8 @@ describe('Protocol Test', () => {
         expect(info.port.length).to.not.equal(0);
 
         done();
+        const resp = [ 1, 'registered!', [] ];
+        callback(null, resp);
       });
 
       const nh = rosnodejs.nh;
@@ -89,6 +90,8 @@ describe('Protocol Test', () => {
         expect(params[1]).to.equal(topic);
         expect(params[2]).to.equal(nodeUri);
 
+        const resp = [ 1, 'unregistered!', [] ];
+        callback(null, resp);
         done();
       });
 
@@ -119,6 +122,8 @@ describe('Protocol Test', () => {
         expect(info.port).to.be.a('string');
         expect(info.port.length).to.not.equal(0);
 
+        const resp = [ 1, 'registered!', [] ];
+        callback(null, resp);
         done();
       });
 
@@ -147,6 +152,8 @@ describe('Protocol Test', () => {
         expect(params[1]).to.equal(topic);
         expect(params[2]).to.equal(nodeUri);
 
+        const resp = [ 1, 'unregistered!', [] ];
+        callback(null, resp);
         done();
       });
 
@@ -184,6 +191,8 @@ describe('Protocol Test', () => {
         expect(info.port).to.be.a('string');
         expect(info.port.length).to.not.equal(0);
 
+        const resp = [ 1, 'registered!', [] ];
+        callback(null, resp);
         done();
       });
 
@@ -208,6 +217,8 @@ describe('Protocol Test', () => {
         expect(params[1]).to.equal(service);
         expect(params[2]).to.equal(serviceUri);
 
+        const resp = [ 1, 'unregistered!', [] ];
+        callback(null, resp);
         done();
       });
 

@@ -428,7 +428,7 @@ function writeGetMessageSize(w, spec) {
             }
 
             // it's a string array!
-            lineToWrite = 'length += 4 + val.length;';
+            lineToWrite = `length += 4 + object.${field.name}[i].length;`;
           }
           else {
             const [pkg, msgType] = field.baseType.split('/');
