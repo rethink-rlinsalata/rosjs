@@ -14,22 +14,23 @@
   },
   "author": "chris smith",
   "license": "Apache-2.0",
-  "repository" : {
-    "type" : "git",
-    "url" : "git://github.com/RethinkRobotics-opensource/rosnodejs"
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/RethinkRobotics-opensource/rosnodejs"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^2.4.5"
   },
   "dependencies": {
+    "argparse": "1.0.7",
+    "async": "0.1.22",
+    "bunyan": "1.8.1",
+    "md5": "2.1.0",
     "moment": "2.12.0",
     "portscanner": "1.0.0",
-    "xmlrpc": "chfritz/node-xmlrpc",
-    "walker"        : "1.0.7",
-    "md5"           : "2.1.0",
-    "async"         : "0.1.22",
-    "bunyan"        : "1.8.1",
-    "ros_msg_utils" : "RethinkRobotics-opensource/ros_msg_utils"
+    "ros_msg_utils": "RethinkRobotics-opensource/ros_msg_utils",
+    "walker": "1.0.7",
+    "xmlrpc": "chfritz/node-xmlrpc"
   }
 }

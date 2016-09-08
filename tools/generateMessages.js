@@ -1,11 +1,43 @@
+'use strict';
+const path = require('path');
 const rosnodejs = require('../index.js');
-const args = process.argv;
+const ArgumentParser = require('argparse').ArgumentParser;
 
-if (args.length === 3) {
-  rosnodejs.loadPackage(args[2]);
+const parser = new ArgumentParser({
+  addHelp: true,
+  description: 'Utility script to generate ROS messages'
+});
+
+parser.addArgument(
+  ['-p', '--pkg'],
+  {
+    help: 'Message package to build (e.g. std_msgs). Also builds dependencies'
+  }
+);
+parser.addArgument(
+  ['-o', '--output'],
+  {
+    help: 'Directory to output message into (e.g. /tmp). Messages are built to devel space by default'
+  }
+);
+parser.addArgument(
+  ['-v', '--verbose'],
+  {
+    action: 'storeTrue'
+  }
+);
+
+const args = parser.parseArgs();
+
+if (args.output) {
+  args.output = path.resolve(args.output);
+}
+
+if (args.pkg !== null) {
+  rosnodejs.loadPackage(args.pkg, args.output, args.verbose);
 }
 else {
-  rosnodejs.loadAllPackages()
+  rosnodejs.loadAllPackages(args.output, args.verbose)
   .then(() => {
     console.log('Message generation complete!');
     process.exit();

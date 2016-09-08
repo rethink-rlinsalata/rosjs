@@ -24,23 +24,17 @@ function createDirectory(directory) {
     return new Promise((resolve, reject) => {
       fs.mkdir(dirPath, (err) => {
         if (err && err.code !== 'EEXIST') {
-          reject();
+          reject(err);
         }
         resolve();
       });
     });
   }
 
-  const promise = Promise.resolve();
-  paths.forEach((part) => {
-    if (!part) {
-      return;
-    }
-    curPath = path.join(curPath, part);
-
-    promise.then(createLocal(curPath));
-  });
-  return promise;
+  return paths.reduce((prev, cur, index, array) => {
+    curPath = path.join(curPath, array[index]);
+    return prev.then(createLocal.bind(null, curPath));
+  }, Promise.resolve());
 }
 
 function writeFile(filepath, data) {
@@ -108,12 +102,11 @@ class MessageManager {
       this._packageChain = this._buildMessageDependencyChain();
 
 
-      const promises = [];
-      this._packageChain.forEach((pkgName) => {
+      return this._packageChain.reduce((prev, cur, index, pkgs) => {
+        const pkgName = pkgs[index];
         // don't need to load deps for each package since all packages are being loaded
-        promises.push(this.loadPackage(pkgName, outputDirectory, false));
-      });
-      return Promise.all(promises);
+        return prev.then(this.loadPackage.bind(this, pkgName, outputDirectory, false));
+      }, Promise.resolve());
     })
     .then(() => {
       console.log('Finished building package tree');
@@ -161,6 +154,7 @@ class MessageManager {
       return Promise.resolve();
     }
     // else
+    this.log('Loading package %s', packageName);
     this._loadingPkgs.set(packageName, PKG_LOADING);
 
     if (loadDeps) {
@@ -193,32 +187,22 @@ class MessageManager {
     const packageDir = path.join(jsMsgDir, packageName);
     packageCache[packageName].directory = packageDir;
 
-    return new Promise((resolve, reject) => {
-      fs.lstat(packageDir, (err, stats) => {
-        if (!err) {
-          resolve();
-          return;
+    return createDirectory(packageDir)
+      .then(() => {
+        if (this.packageHasMessages(packageName) || this.packageHasActions(packageName)) {
+          const msgDir = path.join(packageDir, 'msg');
+          return createDirectory(msgDir)
+            .then(this.createMessageIndex.bind(this, packageName, msgDir));
         }
-        // this means the package directory doesn't exist - set up all the basics...
-        return createDirectory(packageDir)
-        .then(() => {
-          if (this.packageHasMessages(packageName) || this.packageHasActions(packageName)) {
-            const msgDir = path.join(packageDir, 'msg');
-            return createDirectory(msgDir)
-              .then(this.createMessageIndex.bind(this, packageName, msgDir));
-          }
-        })
-        .then(() => {
-          if (this.packageHasServices(packageName)) {
-            const srvDir = path.join(packageDir, 'srv');
-            return createDirectory(srvDir)
-              .then(this.createServiceIndex.bind(this, packageName, srvDir));
-          }
-        })
-        .then(this.createPackageIndex.bind(this, packageName, packageDir))
-        .then(resolve);
-      });
-    });
+      })
+      .then(() => {
+        if (this.packageHasServices(packageName)) {
+          const srvDir = path.join(packageDir, 'srv');
+          return createDirectory(srvDir)
+            .then(this.createServiceIndex.bind(this, packageName, srvDir));
+        }
+      })
+      .then(this.createPackageIndex.bind(this, packageName, packageDir));
   }
 
   createPackageIndex(packageName, directory) {

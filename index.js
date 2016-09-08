@@ -149,8 +149,8 @@ let Rosnodejs = {
       });
   },
 
-  loadPackage(packageName, outputDir) {
-    const msgLoader = new MsgLoader();
+  loadPackage(packageName, outputDir=null, verbose=false) {
+    const msgLoader = new MsgLoader(verbose);
     if (!outputDir) {
       outputDir = msgUtils.getTopLevelMessageDirectory();
     }
@@ -163,8 +163,8 @@ let Rosnodejs = {
     });
   },
 
-  loadAllPackages(outputDir) {
-    const msgLoader = new MsgLoader();
+  loadAllPackages(outputDir=null, verbose=false) {
+    const msgLoader = new MsgLoader(verbose);
     if (!outputDir) {
       outputDir = msgUtils.getTopLevelMessageDirectory();
     }
@@ -172,9 +172,6 @@ let Rosnodejs = {
       .then(() => {
         console.log('Finished building messages!');
       })
-      .catch((err) => {
-        console.error(err);
-      });
   },
 
   require(msgPackage) {
