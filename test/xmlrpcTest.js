@@ -60,9 +60,9 @@ describe('Protocol Test', () => {
         expect(info.port).to.be.a('string');
         expect(info.port.length).to.not.equal(0);
 
-        done();
         const resp = [ 1, 'registered!', [] ];
         callback(null, resp);
+        done();
       });
 
       const nh = rosnodejs.nh;
