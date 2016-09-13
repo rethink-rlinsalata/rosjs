@@ -228,6 +228,7 @@ class RosMsgSpec {
     const lineCommentIndex = line.indexOf('#');
 
     // clear out comments if this line is not a constant
+    // string constants include EVERYTHING after the equals
     if ((lineEqualIndex === -1 && lineCommentIndex !== -1)
         || lineEqualIndex > lineCommentIndex)
     {
@@ -235,9 +236,10 @@ class RosMsgSpec {
     }
 
     if (line !== '') {
+
       var firstSpace = line.indexOf(' ')
-        , fieldType  = line.substring(0, firstSpace)
-        , field      = line.substring(firstSpace + 1)
+        , fieldType  = line.substring(0, firstSpace).trim()
+        , field      = line.substring(firstSpace + 1).trim()
         , equalIndex = field.indexOf('=')
         , fieldName  = field.trim()
         ;

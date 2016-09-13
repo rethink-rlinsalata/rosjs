@@ -23,13 +23,14 @@ const base_deserializers = ros_msg_utils.Deserialize;
 
 //-----------------------------------------------------------------------
 
-let callerIdPrefix = 'callerid=';
-let md5Prefix = 'md5sum=';
-let topicPrefix = 'topic=';
-let servicePrefix = 'service=';
-let typePrefix = 'type=';
-let latchingPrefix = 'latching=';
-let persistentPrefix = 'persistent=';
+const callerIdPrefix = 'callerid=';
+const md5Prefix = 'md5sum=';
+const topicPrefix = 'topic=';
+const servicePrefix = 'service=';
+const typePrefix = 'type=';
+const latchingPrefix = 'latching=';
+const persistentPrefix = 'persistent=';
+const errorPrefix = 'error='
 
 //-----------------------------------------------------------------------
 

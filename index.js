@@ -41,11 +41,11 @@ msgUtils.findMessageFiles();
 // will be initialized through call to initNode
 let log = Logging.getLogger();
 let rosNode = null;
-let firstCheck = true;
 
 //------------------------------------------------------------------
 
-function _checkMasterHelper(timeout) {
+function _checkMasterHelper(timeout=500) {
+  let firstCheck = true;
 
   const localHelper = (resolve) => {
     setTimeout(() => {
@@ -55,17 +55,21 @@ function _checkMasterHelper(timeout) {
         return;
       }
       // else
+      if (firstCheck) {
+        // hook into master api connection errors.
+        // api client will continue trying to connect
+        rosNode._masterApi.getXmlrpcClient().once('ECONNREFUSED', (err) => {
+          log.warn(`Unable to register with master node [${rosNode.getRosMasterUri()}]: master may not be running yet. Will keep trying.`);
+        });
+        firstCheck = false;
+      }
       rosNode.getMasterUri()
-      .then((resp) => {
-        log.infoOnce('Connected to master!');
+      .then(() => {
+        log.infoOnce(`Connected to master at ${rosNode.getRosMasterUri()}!`);
         resolve();
       })
       .catch((err, resp) => {
-        if (firstCheck) {
-          log.warnOnce('Unable to connect to master. ' + err);
-          firstCheck = false;
-        }
-        console.log('check master: ' + err);
+        log.warnThrottle(60000, 'Unable to connect to master. ' + err);
         localHelper(resolve);
       })
     }, timeout);
@@ -136,13 +140,15 @@ let Rosnodejs = {
       netUtils.setPortRange(options.portRange);
     }
 
+    Logging.initializeNodeLogger(nodeName, options.logging);
+
     // create the ros node. Return a promise that will
     // resolve when connection to master is established
     rosNode = new RosNode(nodeName, rosMasterUri);
 
     return this.use(options.messages, options.services)
       .then(_checkMasterHelper)
-      .then(Logging.initializeOptions.bind(Logging, this, options.logging))
+      .then(Logging.initializeRosOptions.bind(Logging, this, options.logging))
       .then(() => { return this.getNodeHandle(); })
       .catch((err) => {
         log.error('Error: ' + err);

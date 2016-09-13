@@ -335,8 +335,18 @@ describe('Logging', () => {
         pubInfo = null;
       });
 
+      masterStub.on('registerService', (err, params, callback) => {
+        const resp =  [1, 'You did it!', 1];
+        callback(null, resp);
+      });
+
+      masterStub.on('unregisterService', (err, params, callback) => {
+        const resp =  [1, 'You did it!', 1];
+        callback(null, resp);
+      });
+
       rosnodejs.log.setLevel('info');
-      return rosnodejs.initNode('/testNode');
+      return rosnodejs.initNode('/testNode', {logging: {testing: true}});
     });
 
     afterEach(() => {

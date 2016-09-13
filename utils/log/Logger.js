@@ -52,6 +52,28 @@ class Logger {
     this._createOnceLogMethods(logMethods);
   }
 
+  getStreams() {
+    return this._logger.streams;
+  }
+
+  child(childOptions) {
+    // setup options
+    const name = childOptions.name;
+    delete childOptions.name;
+    const options = {
+      childOptions: childOptions,
+      $parent: this._logger,
+      name
+    };
+
+    // create logger
+    return new Logger(options);
+  }
+
+  level(level=null) {
+    this._logger.level(level);
+  }
+
   setLevel(level) {
     this._logger.level(level);
   }
@@ -65,7 +87,7 @@ class Logger {
   }
 
   addStream(stream) {
-    this._logger.addStream(stream);
+    this._logger.addStream(stream, this.getLevel());
   }
 
   clearStreams() {

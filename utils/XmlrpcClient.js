@@ -1,8 +1,9 @@
 'use strict';
+const EventEmitter = require('events');
 const xmlrpc = require('xmlrpc');
 
 const CONNECTION_REFUSED='ECONNREFUSED';
-const TRY_AGAIN_LIST = [1, 2, 2, 4, 4, 4, 4, 8, 8, 8, 8, 16, 32, 64, 128, 256, 512, 1000];
+const TRY_AGAIN_LIST = [1, 2, 2, 4, 4, 4, 4, 8, 8, 8, 8, 16, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
 class XmlrpcCall {
   constructor(method, data, resolve, reject) {
@@ -26,8 +27,10 @@ class XmlrpcCall {
   }
 }
 
-class XmlrpcClient {
+class XmlrpcClient extends EventEmitter {
   constructor(clientAddressInfo, log) {
+    super();
+
     this._xmlrpcClient = xmlrpc.createClient(clientAddressInfo);
 
     this._log = log;
@@ -36,6 +39,8 @@ class XmlrpcClient {
 
     this._timeout = 0;
     this._timeoutId = null;
+
+    this._failedAttempts = 0;
   }
 
   getClient() {
@@ -75,6 +80,7 @@ class XmlrpcClient {
         // All future calls would have same error since they're
         // directed at the same xmlrpc server.
         this._scheduleTryAgain();
+        this.emit(CONNECTION_REFUSED, err, this._failedAttempts);
       }
       else {
         // call failed - move on.
@@ -97,6 +103,7 @@ class XmlrpcClient {
   _resetTimeout() {
     this._timeout = 0;
     this._timeoutId = null;
+    this._failedAttempts = 0;
   }
 
   _scheduleTryAgain() {
@@ -104,6 +111,7 @@ class XmlrpcClient {
     if (this._timeout + 1 < TRY_AGAIN_LIST.length) {
       ++this._timeout;
     }
+    ++this._failedAttempts;
     this._log.info('Scheduling call again in %dms', timeout);
     this._timeoutId = setTimeout(this._tryExecuteCall.bind(this), timeout);
   }
