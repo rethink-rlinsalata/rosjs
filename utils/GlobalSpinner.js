@@ -205,8 +205,6 @@ class GlobalSpinner extends events {
       }
     }
 
-    this._getClientsWithQueuedMessages();
-
     if (keepOnQueue.length > 0) {
       this._clientCallQueue = keepOnQueue;
     }
