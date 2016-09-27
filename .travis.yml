@@ -23,7 +23,7 @@ before_install:
   - sudo apt-get update -qq
   # Install ROS
   - sudo apt-get install python-rosdep python-rosinstall-generator python-wstool python-rosinstall build-essential
-  # Setup for rosdep
+  - sudo apt-get install ros-indigo-catkin
   - sudo apt-get install ros-indigo-ros-base
 
 # Create a catkin workspace with the package under test.
