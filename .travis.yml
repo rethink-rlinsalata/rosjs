@@ -1,6 +1,6 @@
 sudo: required
 
-dist: xenial
+dist: trusty
 
 language: node_js
 node_js:
@@ -9,8 +9,8 @@ node_js:
 env:
   global:
     - ROS_PARALLEL_JOBS="-j8 -l6"
-    - ROS_DISTRO=kinetic
-    - ROSINSTALL_FILE=~/kinetic-ros_comm-wet.rosinstall
+    - ROS_DISTRO=indigo
+    - ROSINSTALL_FILE=~/indigo-ros_comm-wet.rosinstall
 
 # Install system dependencies, namely ROS.
 before_install:
@@ -24,7 +24,7 @@ before_install:
   # Install ROS
   - sudo apt-get install python-rosdep python-rosinstall-generator python-wstool python-rosinstall build-essential
   # Setup for rosdep
-  - sudo apt-get install ros-kinetic-ros-base
+  - sudo apt-get install ros-indigo-ros-base
 
 # Create a catkin workspace with the package under test.
 install:
@@ -41,6 +41,7 @@ install:
 before_script:
   - cd ~
   - npm install
+  - npm run generate
 
 script:
   - npm test
