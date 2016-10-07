@@ -95,6 +95,7 @@ function writeRequires(w, spec, isSrv, previousPackages=null, previousDeps=null)
     w.write('const _deserializer = _ros_msg_utils.Deserialize;');
     w.write('const _arrayDeserializer = _deserializer.Array');
     w.write('const _finder = _ros_msg_utils.Find;');
+    w.write('const _getByteLength = _ros_msg_utils.getByteLength');
     previousPackages = new Set();
   }
   if (previousDeps === null) {
@@ -495,7 +496,7 @@ function writeGetMessageSize(w, spec) {
             }
 
             // it's a string array!
-            lineToWrite = `length += 4 + object.${field.name}[i].length;`;
+            lineToWrite = `length += 4 + _getByteLength(object.${field.name}[i]);`;
           }
           else {
             const [pkg, msgType] = field.baseType.split('/');
@@ -528,7 +529,7 @@ function writeGetMessageSize(w, spec) {
           // it's a string!
           // string length consumes 4 bytes in message
           lenConstantLengthFields += 4;
-          lineToWrite = `length += object.${field.name}.length;`
+          lineToWrite = `length += _getByteLength(object.${field.name});`
         }
         else {
           const [pkg, msgType] = field.baseType.split('/');
